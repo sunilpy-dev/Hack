@@ -15,11 +15,11 @@ class LogRepository {
     return rows;
   }
 
-  async log({ user_id, action_type, entity_name, entity_id, old_values, new_values, ip_address, user_agent }) {
+  async log({ user_id, action_type, entity_name, entity_id, old_values, new_values, ip_address, user_agent }, client = db) {
     // Call the stored procedure: CALL activity.log_activity(...)
     // Note that standard parameters for CALL must match.
     // CALL activity.log_activity(p_user_id, p_action_type, p_entity_name, p_entity_id, p_old_values, p_new_values, p_ip_address, p_user_agent)
-    await db.query(
+    await client.query(
       `CALL activity.log_activity($1, $2, $3, $4, $5, $6, $7, $8)`,
       [
         user_id || null,

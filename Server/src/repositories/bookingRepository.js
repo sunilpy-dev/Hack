@@ -1,8 +1,8 @@
 import db from '../config/db.js';
 
 class BookingRepository {
-  async findAll() {
-    const queryText = `
+  async findAll(employeeId = null) {
+    let queryText = `
       SELECT b.id, b.resource_id, b.employee_id, b.purpose, b.status,
              lower(b.booking_period) AS start_time,
              upper(b.booking_period) AS end_time,
@@ -14,9 +14,14 @@ class BookingRepository {
       JOIN resource.resources r ON b.resource_id = r.id AND r.is_deleted = FALSE
       JOIN resource.resource_types rt ON r.resource_type_id = rt.id
       JOIN org.employees e ON b.employee_id = e.id AND e.is_deleted = FALSE
-      ORDER BY start_time ASC
     `;
-    const { rows } = await db.query(queryText);
+    const params = [];
+    if (employeeId) {
+      queryText += ` WHERE b.employee_id = $1`;
+      params.push(employeeId);
+    }
+    queryText += ` ORDER BY start_time ASC`;
+    const { rows } = await db.query(queryText, params);
     return rows;
   }
 

@@ -34,5 +34,10 @@ export const assetService = {
   async getEmployees() {
     const res = await api.get('/employees');
     return res.data;
+  },
+
+  async getDepartments() {
+    const res = await api.get('/employees/departments');
+    return res.data;
   }
 };

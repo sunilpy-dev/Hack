@@ -3,7 +3,8 @@ import bookingService from '../services/bookingService.js';
 class BookingController {
   async getAll(req, res, next) {
     try {
-      const data = await bookingService.getAllBookings();
+      const employeeId = (req.user && req.user.role === 'Employee') ? req.user.employeeId : null;
+      const data = await bookingService.getAllBookings(employeeId);
       res.status(200).json({
         success: true,
         message: 'Bookings retrieved successfully',

@@ -1,7 +1,7 @@
 import db from '../config/db.js';
 
 class AssetRepository {
-  async findAll({ search, category, status, location, health }) {
+  async findAll({ search, category, status, location, health, employee_id }) {
     let queryText = `SELECT * FROM asset.v_asset_details WHERE 1=1`;
     const params = [];
     let paramIndex = 1;
@@ -35,6 +35,12 @@ class AssetRepository {
       } else if (status === 'DECOMMISSIONED') {
         queryText += ` AND current_status IN ('lost', 'retired', 'disposed')`;
       }
+    }
+
+    if (employee_id) {
+      queryText += ` AND employee_id = $${paramIndex}`;
+      params.push(employee_id);
+      paramIndex++;
     }
 
     queryText += ` ORDER BY asset_name ASC`;

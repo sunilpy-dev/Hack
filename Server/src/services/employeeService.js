@@ -10,6 +10,10 @@ class EmployeeService {
       email: e.email
     }));
   }
+
+  async getDepartments() {
+    return employeeRepository.getDepartments();
+  }
 }
 
 export default new EmployeeService();

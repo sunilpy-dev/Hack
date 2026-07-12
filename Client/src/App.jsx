@@ -8,8 +8,14 @@ import AuditCenterView from './components/AuditCenterView';
 import AnalyticsView from './components/AnalyticsView';
 import ExecutiveModeView from './components/ExecutiveModeView';
 
+import LoginView from './components/LoginView';
+import PasswordResetView from './components/PasswordResetView';
+import ProfileView from './components/ProfileView';
+import EmployeeCreationView from './components/EmployeeCreationView';
+
 import { assetService } from './services/assetService.js';
 import { maintenanceService } from './services/maintenanceService.js';
+import { authService } from './services/authService.js';
 
 import { 
   Search, 
@@ -19,13 +25,42 @@ import {
   Send, 
   X, 
   Bot,
-  User,
-  Settings,
-  HelpCircle
+  Loader2
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('directory');
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Authentication State
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [resetData, setResetData] = useState(null);
+
+  // Validate session on mount or token changes
+  useEffect(() => {
+    const checkSession = async () => {
+      if (token) {
+        try {
+          const userProfile = await authService.me();
+          setCurrentUser(userProfile);
+          
+          // Force activeTab to first accessible tab if it's restricted
+          const allowedTabs = getAllowedTabs(userProfile.role);
+          if (!allowedTabs.includes(activeTab)) {
+            setActiveTab(allowedTabs[0] || 'dashboard');
+          }
+        } catch (err) {
+          console.error('Session validation error:', err);
+          handleLogout();
+        }
+      } else {
+        setCurrentUser(null);
+      }
+      setAuthLoading(false);
+    };
+    checkSession();
+  }, [token]);
 
   // Global Assets State
   const [assets, setAssets] = useState([]);
@@ -43,8 +78,10 @@ export default function App() {
   // Global Work Orders State for Kanban
   const [workOrders, setWorkOrders] = useState([]);
 
-  // Load initial data from backend
+  // Load initial data from backend when user is authenticated
   useEffect(() => {
+    if (!currentUser) return;
+    
     const loadInitialData = async () => {
       try {
         const assetsData = await assetService.getAll();
@@ -56,7 +93,7 @@ export default function App() {
       }
     };
     loadInitialData();
-  }, []);
+  }, [currentUser]);
 
   // Modals state
   const [isNewAssetOpen, setIsNewAssetOpen] = useState(false);
@@ -70,6 +107,52 @@ export default function App() {
     { role: 'assistant', text: 'Hello, I am your AssetBridge Intelligence Assistant. How can I help you coordinate assets, people, and operations today?' }
   ]);
   const [chatInput, setChatInput] = useState('');
+
+  // Get allowed tabs based on role
+  const getAllowedTabs = (role) => {
+    switch (role) {
+      case 'Employee':
+        return ['dashboard', 'directory', 'booking', 'profile'];
+      case 'Department Head':
+        return ['dashboard', 'directory', 'booking', 'profile'];
+      case 'Asset Manager':
+        return ['dashboard', 'directory', 'maintenance', 'profile'];
+      case 'Resource Manager':
+        return ['dashboard', 'booking', 'profile'];
+      case 'Technician':
+        return ['dashboard', 'maintenance', 'profile'];
+      case 'Auditor':
+        return ['dashboard', 'audit', 'profile'];
+      case 'Admin':
+      default:
+        return ['dashboard', 'directory', 'booking', 'maintenance', 'audit', 'analytics', 'executive', 'employee-creation', 'profile', 'settings', 'support'];
+    }
+  };
+
+  const handleLoginSuccess = (userToken, user) => {
+    setToken(userToken);
+    setCurrentUser(user);
+    setActiveTab('dashboard');
+  };
+
+  const handlePasswordResetRequired = (data) => {
+    setResetData(data);
+  };
+
+  const handlePasswordResetSuccess = (userToken, user) => {
+    setResetData(null);
+    setToken(userToken);
+    setCurrentUser(user);
+    setActiveTab('dashboard');
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setToken(null);
+    setCurrentUser(null);
+    setResetData(null);
+    setActiveTab('dashboard');
+  };
 
   // Handle AI Insights Generate Work Orders Action
   const handleGenerateWorkOrders = async () => {
@@ -150,6 +233,39 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // 1. Loading state screen
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#fcf8fa]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 size={36} className="text-[#06b6d4] animate-spin" />
+          <span className="font-mono text-xs text-[#76777d]">Verifying credentials session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated flows (Force login / force password change)
+  if (!currentUser) {
+    if (resetData) {
+      return (
+        <PasswordResetView 
+          email={resetData.email} 
+          userId={resetData.userId} 
+          onPasswordResetSuccess={handlePasswordResetSuccess} 
+        />
+      );
+    }
+    return (
+      <LoginView 
+        onLoginSuccess={handleLoginSuccess} 
+        onPasswordResetRequired={handlePasswordResetRequired} 
+      />
+    );
+  }
+
+  const allowedTabs = getAllowedTabs(currentUser.role);
+
   return (
     <div className="flex w-full min-h-screen bg-[#fcf8fa] relative overflow-hidden font-sans">
       
@@ -157,6 +273,8 @@ export default function App() {
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
+        userRole={currentUser.role}
+        onLogout={handleLogout}
         onOpenAiAssistant={() => setIsAiAssistantOpen(true)}
       />
 
@@ -228,13 +346,20 @@ export default function App() {
             {/* User Profile info */}
             <div className="flex items-center gap-2.5 select-none">
               <div className="text-right hidden sm:block">
-                <div className="text-xs font-bold text-[#0F172A] font-sans">Alex Stratton</div>
-                <div className="text-[10px] text-[#76777d] font-mono font-medium leading-none mt-0.5">Director of Ops</div>
+                <div className="text-xs font-bold text-[#0F172A] font-sans">
+                  {currentUser.employee ? `${currentUser.employee.firstName} ${currentUser.employee.lastName}` : currentUser.email}
+                </div>
+                <div className="text-[10px] text-[#76777d] font-mono font-medium leading-none mt-0.5">
+                  {currentUser.employee ? currentUser.employee.designation : currentUser.role}
+                </div>
               </div>
               
               {/* User avatar profile image */}
-              <div className="w-8 h-8 rounded-full border border-[#e5e4e7] overflow-hidden flex items-center justify-center bg-slate-900 text-white font-mono text-xs font-bold">
-                AS
+              <div className="w-8 h-8 rounded-full border border-[#e5e4e7] overflow-hidden flex items-center justify-center bg-slate-900 text-white font-mono text-xs font-bold uppercase">
+                {currentUser.employee 
+                  ? `${currentUser.employee.firstName[0]}${currentUser.employee.lastName[0]}`
+                  : currentUser.email.substring(0, 2).toUpperCase()
+                }
               </div>
             </div>
 
@@ -244,7 +369,7 @@ export default function App() {
 
         {/* Dynamic Views Switcher */}
         <div className="flex-1 flex overflow-hidden">
-          {activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && allowedTabs.includes('dashboard') && (
             <DashboardView 
               onOpenNewAsset={() => {
                 setActiveTab('directory');
@@ -255,7 +380,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'directory' && (
+          {activeTab === 'directory' && allowedTabs.includes('directory') && (
             <AssetDirectoryView 
               assets={assets}
               setAssets={setAssets}
@@ -266,7 +391,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'booking' && (
+          {activeTab === 'booking' && allowedTabs.includes('booking') && (
             <ResourceBookingView 
               onOpenNewWorkOrder={() => {
                 setActiveTab('maintenance');
@@ -275,7 +400,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'maintenance' && (
+          {activeTab === 'maintenance' && allowedTabs.includes('maintenance') && (
             <MaintenanceCenterView 
               workOrders={workOrders}
               setWorkOrders={setWorkOrders}
@@ -284,13 +409,21 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'audit' && <AuditCenterView />}
+          {activeTab === 'audit' && allowedTabs.includes('audit') && <AuditCenterView />}
 
-          {activeTab === 'analytics' && <AnalyticsView />}
+          {activeTab === 'analytics' && allowedTabs.includes('analytics') && <AnalyticsView />}
 
-          {activeTab === 'executive' && <ExecutiveModeView />}
+          {activeTab === 'executive' && allowedTabs.includes('executive') && <ExecutiveModeView />}
 
-          {activeTab === 'settings' && (
+          {activeTab === 'employee-creation' && allowedTabs.includes('employee-creation') && (
+            <EmployeeCreationView />
+          )}
+
+          {activeTab === 'profile' && allowedTabs.includes('profile') && (
+            <ProfileView userProfile={currentUser} />
+          )}
+
+          {activeTab === 'settings' && allowedTabs.includes('settings') && (
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
               <h1 className="text-2xl font-bold font-sans text-[#0F172A]">Settings</h1>
               <p className="text-sm text-[#45464d]">Configure platform-wide asset synchronization, notification rules, and operator credentials.</p>
@@ -314,7 +447,7 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === 'support' && (
+          {activeTab === 'support' && allowedTabs.includes('support') && (
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
               <h1 className="text-2xl font-bold font-sans text-[#0F172A]">System Support</h1>
               <p className="text-sm text-[#45464d]">Connect with enterprise administrators, reference developer documentation, or file service logs.</p>

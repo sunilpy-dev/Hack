@@ -7,28 +7,29 @@ import {
   FileCheck, 
   BarChart3, 
   ShieldAlert, 
-  Settings, 
-  HelpCircle, 
   Bot, 
   ChevronLeft, 
   ChevronRight,
-  MessageSquare,
-  Send,
-  X
+  UserPlus,
+  User,
+  LogOut
 } from 'lucide-react';
 
-export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant }) {
+export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant, userRole = 'Employee', onLogout }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'directory', label: 'Asset Directory', icon: FolderTree },
-    { id: 'booking', label: 'Resource Booking', icon: CalendarRange },
-    { id: 'maintenance', label: 'Maintenance Center', icon: Wrench },
-    { id: 'audit', label: 'Audit Center', icon: FileCheck },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'executive', label: 'Executive Mode', icon: ShieldAlert },
+  const allMenuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Employee', 'Department Head', 'Asset Manager', 'Resource Manager', 'Technician', 'Auditor'] },
+    { id: 'directory', label: 'Asset Directory', icon: FolderTree, roles: ['Admin', 'Employee', 'Department Head', 'Asset Manager'] },
+    { id: 'booking', label: 'Resource Booking', icon: CalendarRange, roles: ['Admin', 'Employee', 'Department Head', 'Resource Manager'] },
+    { id: 'maintenance', label: 'Maintenance Center', icon: Wrench, roles: ['Admin', 'Asset Manager', 'Technician'] },
+    { id: 'audit', label: 'Audit Center', icon: FileCheck, roles: ['Admin', 'Auditor'] },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['Admin'] },
+    { id: 'executive', label: 'Executive Mode', icon: ShieldAlert, roles: ['Admin'] },
+    { id: 'employee-creation', label: 'Employee Provisioning', icon: UserPlus, roles: ['Admin'] },
   ];
+
+  const menuItems = allMenuItems.filter(item => item.roles.includes(userRole));
 
   return (
     <div 
@@ -142,26 +143,24 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant }) 
           )}
         </button>
 
-        {/* Settings button */}
+        {/* Profile button */}
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => setActiveTab('profile')}
           className={`w-full flex items-center text-[#45464d] hover:bg-[#f6f3f5] rounded-sm py-2 px-3 transition-colors cursor-pointer ${
-            activeTab === 'settings' ? 'bg-[#f0edef] font-semibold text-[#0F172A]' : 'font-medium'
+            activeTab === 'profile' ? 'bg-[#f0edef] font-semibold text-[#0F172A]' : 'font-medium'
           }`}
         >
-          <Settings size={20} strokeWidth={1.5} className="text-[#76777d]" />
-          {!isCollapsed && <span className="ml-3 text-sm font-sans">Settings</span>}
+          <User size={20} strokeWidth={1.5} className="text-[#76777d]" />
+          {!isCollapsed && <span className="ml-3 text-sm font-sans">Profile</span>}
         </button>
 
-        {/* Support button */}
+        {/* Logout button */}
         <button
-          onClick={() => setActiveTab('support')}
-          className={`w-full flex items-center text-[#45464d] hover:bg-[#f6f3f5] rounded-sm py-2 px-3 transition-colors cursor-pointer ${
-            activeTab === 'support' ? 'bg-[#f0edef] font-semibold text-[#0F172A]' : 'font-medium'
-          }`}
+          onClick={onLogout}
+          className="w-full flex items-center text-red-600 hover:bg-red-50 rounded-sm py-2 px-3 transition-colors cursor-pointer font-medium"
         >
-          <HelpCircle size={20} strokeWidth={1.5} className="text-[#76777d]" />
-          {!isCollapsed && <span className="ml-3 text-sm font-sans">Support</span>}
+          <LogOut size={20} strokeWidth={1.5} className="text-red-500" />
+          {!isCollapsed && <span className="ml-3 text-sm font-sans">Logout</span>}
         </button>
       </div>
     </div>

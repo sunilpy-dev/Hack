@@ -4,6 +4,7 @@ import cors from 'cors';
 import logger from './middlewares/logger.js';
 import errorHandler from './middlewares/errorHandler.js';
 import apiRouter from './routes/index.js';
+import authMiddleware from './middlewares/authMiddleware.js';
 import { NotFoundError } from './utils/errors.js';
 
 const app = express();
@@ -21,6 +22,9 @@ app.use(logger);
 
 // Parse JSON request bodies
 app.use(express.json());
+
+// Global Authentication Parser Middleware
+app.use(authMiddleware);
 
 // Main API Router
 app.use('/api', apiRouter);

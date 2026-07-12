@@ -3,8 +3,8 @@ import employeeRepository from '../repositories/employeeRepository.js';
 import { ValidationError } from '../utils/errors.js';
 
 class BookingService {
-  async getAllBookings() {
-    const list = await bookingRepository.findAll();
+  async getAllBookings(employeeId = null) {
+    const list = await bookingRepository.findAll(employeeId);
     return list.map(b => ({
       id: b.id,
       resourceId: b.resource_id,

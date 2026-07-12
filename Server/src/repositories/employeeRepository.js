@@ -27,6 +27,13 @@ class EmployeeRepository {
     );
     return rows[0];
   }
+
+  async getDepartments() {
+    const { rows } = await db.query(
+      `SELECT id, code, name FROM org.departments ORDER BY name ASC`
+    );
+    return rows;
+  }
 }
 
 export default new EmployeeRepository();
