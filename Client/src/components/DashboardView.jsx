@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { dashboardService } from '../services/dashboardService.js';
 import { 
   Box, 
   Gauge, 
@@ -13,13 +14,31 @@ import {
 } from 'lucide-react';
 
 export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, workOrdersCount }) {
-  const [logs, setLogs] = useState([
-    { id: '#AS-9921', status: 'IN TRANSIT', operator: 'Marcus Chen', time: '14:22:01', statusColor: 'bg-blue-50 text-blue-700 border-blue-200' },
-    { id: '#AS-4412', status: 'DECOMMISSIONED', operator: 'Automated Agent', time: '13:58:12', statusColor: 'bg-gray-100 text-gray-700 border-gray-200' },
-    { id: '#AS-0051', status: 'FAULT DETECTED', operator: 'System Watcher', time: '13:45:00', statusColor: 'bg-red-50 text-red-700 border-red-200' },
-  ]);
+  const [logs, setLogs] = useState([]);
+  const [stats, setStats] = useState({
+    totalAssets: 1248,
+    utilizationRate: 84,
+    maintenanceRisk: 'Low',
+    efficiencyIndex: 92,
+    auditCompliance: 98,
+    outstandingDiscrepancies: 12
+  });
 
   const [notification, setNotification] = useState('');
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const statsData = await dashboardService.getStats();
+        setStats(statsData);
+        const logsData = await dashboardService.getLogs();
+        setLogs(logsData);
+      } catch (err) {
+        console.error('Error fetching dashboard statistics:', err);
+      }
+    };
+    fetchDashboardData();
+  }, [workOrdersCount]);
 
   const triggerGenerateWorkOrders = () => {
     if (onGenerateWorkOrders) {
@@ -74,7 +93,7 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
             <Box size={16} className="text-[#76777d] group-hover:text-[#06b6d4] transition-colors" />
           </div>
           <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-[#0F172A]">1,248</div>
+            <div className="text-2xl font-bold font-mono text-[#0F172A]">{stats.totalAssets.toLocaleString()}</div>
             {/* Mini bar chart */}
             <div className="flex gap-0.5 items-end h-5 mt-1.5">
               <div className="w-4 bg-gray-200 h-2 rounded-xs"></div>
@@ -95,10 +114,10 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
             <Gauge size={16} className="text-[#76777d] group-hover:text-[#06b6d4] transition-colors" />
           </div>
           <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-[#0F172A]">84%</div>
+            <div className="text-2xl font-bold font-mono text-[#0F172A]">{stats.utilizationRate}%</div>
             <div className="flex items-center gap-2 mt-3.5">
               <div className="flex-1 bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                <div className="bg-[#0F172A] h-full rounded-full" style={{ width: '84%' }}></div>
+                <div className="bg-[#0F172A] h-full rounded-full" style={{ width: `${stats.utilizationRate}%` }}></div>
               </div>
               <span className="text-[10px] font-mono font-bold text-emerald-600 shrink-0">+2.4%</span>
             </div>
@@ -114,7 +133,7 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
             <ShieldAlert size={16} className="text-[#76777d] group-hover:text-[#06b6d4] transition-colors" />
           </div>
           <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-[#0F172A] uppercase">Low</div>
+            <div className="text-2xl font-bold font-mono text-[#0F172A] uppercase">{stats.maintenanceRisk}</div>
             <div className="flex gap-1 items-center mt-4">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
@@ -132,7 +151,7 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
             <Calendar size={16} className="text-[#76777d] group-hover:text-[#06b6d4] transition-colors" />
           </div>
           <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-[#0F172A]">92%</div>
+            <div className="text-2xl font-bold font-mono text-[#0F172A]">{stats.efficiencyIndex}%</div>
             <div className="flex items-center gap-1 text-[10px] font-mono text-[#76777d] mt-4">
               <ArrowUpRight size={10} className="text-emerald-500" />
               <span>Benchmark: 88%</span>
@@ -149,7 +168,7 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
             <Lock size={14} className="text-[#76777d]" />
           </div>
           <div className="mt-2">
-            <div className="text-2xl font-bold font-mono text-[#0F172A]">98%</div>
+            <div className="text-2xl font-bold font-mono text-[#0F172A]">{stats.auditCompliance}%</div>
             <div className="flex items-center justify-between text-[10px] font-mono text-[#76777d] mt-4">
               <span>Tier 1 Standing</span>
               <span className="font-semibold text-xs tracking-widest text-[#0F172A] uppercase">Locked</span>

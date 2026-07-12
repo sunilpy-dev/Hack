@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { bookingService } from '../services/bookingService.js';
 import { 
   Heart, 
   AlertTriangle, 
@@ -12,23 +13,62 @@ import {
 
 export default function ResourceBookingView({ onOpenNewWorkOrder }) {
   const [selectedDay, setSelectedDay] = useState(null);
+  const [bookings, setBookings] = useState([]);
+  const [spaceUtilization, setSpaceUtilization] = useState([]);
 
-  const days = [
-    { date: 28, month: 'Sep', booked: true, past: true, label: 'HVAC Sync' },
-    { date: 29, month: 'Sep', booked: true, past: true, label: 'Board Meeting' },
-    { date: 30, month: 'Sep', booked: true, label: 'HVAC Overhaul', type: 'hvac' },
+  useEffect(() => {
+    const fetchBookingData = async () => {
+      try {
+        const list = await bookingService.getAll();
+        setBookings(list);
+        const util = await bookingService.getSpaceUtilization();
+        setSpaceUtilization(util);
+      } catch (err) {
+        console.error('Error fetching booking data:', err);
+      }
+    };
+    fetchBookingData();
+  }, []);
+
+  const rawDays = [
+    { date: 28, month: 'Sep', booked: false, past: true, label: 'HVAC Sync' },
+    { date: 29, month: 'Sep', booked: false, past: true, label: 'Board Meeting' },
+    { date: 30, month: 'Sep', booked: false, label: 'HVAC Overhaul', type: 'hvac' },
     { date: 1, month: 'Oct', booked: false },
     { date: 2, month: 'Oct', booked: false, label: 'Audit B-02', type: 'audit' },
-    { date: 3, month: 'Oct', booked: true, label: 'Client Conf' },
+    { date: 3, month: 'Oct', booked: false, label: 'Client Conf' },
     { date: 4, month: 'Oct', booked: false },
-    { date: 5, month: 'Oct', booked: true, label: 'Internal Sync' },
+    { date: 5, month: 'Oct', booked: false, label: 'Internal Sync' },
     { date: 6, month: 'Oct', booked: false },
     { date: 7, month: 'Oct', booked: false, label: 'Cleaning', type: 'cleaning' },
-    { date: 8, month: 'Oct', booked: true, borderRed: true, label: 'Main Overhaul' },
+    { date: 8, month: 'Oct', booked: false, borderRed: true, label: 'Main Overhaul' },
     { date: 9, month: 'Oct', booked: false },
     { date: 10, month: 'Oct', booked: false },
     { date: 11, month: 'Oct', booked: false }
   ];
+
+  const days = rawDays.map(d => {
+    // Check if there is an active DB booking matching this day of the month
+    const match = bookings.find(b => {
+      const start = new Date(b.startTime);
+      return start.getDate() === d.date;
+    });
+
+    if (match) {
+      return {
+        ...d,
+        booked: true,
+        label: match.purpose,
+        type: match.resourceType?.toLowerCase().includes('room') ? 'hvac' : 'audit'
+      };
+    }
+
+    // Default/fallback mock values if no DB bookings match
+    if (d.date === 28 || d.date === 29 || d.date === 30 || d.date === 3 || d.date === 5 || d.date === 8) {
+      return { ...d, booked: true };
+    }
+    return d;
+  });
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -202,27 +242,38 @@ export default function ResourceBookingView({ onOpenNewWorkOrder }) {
             </div>
 
             <div className="space-y-3">
-              {/* Progress 1 */}
-              <div>
-                <div className="flex justify-between items-center text-xs font-sans text-[#45464d] font-semibold mb-1">
-                  <span>Conference Room A</span>
-                  <span className="font-mono">92%</span>
+              {spaceUtilization.length > 0 ? spaceUtilization.map((su, idx) => (
+                <div key={su.id || idx}>
+                  <div className="flex justify-between items-center text-xs font-sans text-[#45464d] font-semibold mb-1">
+                    <span>{su.name}</span>
+                    <span className="font-mono">{su.utilization}</span>
+                  </div>
+                  <div className="bg-gray-100 h-1 rounded-full overflow-hidden">
+                    <div className="bg-[#0F172A] h-full" style={{ width: su.utilization }}></div>
+                  </div>
                 </div>
-                <div className="bg-gray-100 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#0F172A] h-full" style={{ width: '92%' }}></div>
-                </div>
-              </div>
-
-              {/* Progress 2 */}
-              <div>
-                <div className="flex justify-between items-center text-xs font-sans text-[#45464d] font-semibold mb-1">
-                  <span>Lounge Hub</span>
-                  <span className="font-mono">45%</span>
-                </div>
-                <div className="bg-gray-100 h-1 rounded-full overflow-hidden">
-                  <div className="bg-[#0F172A] h-full" style={{ width: '45%' }}></div>
-                </div>
-              </div>
+              )) : (
+                <>
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-sans text-[#45464d] font-semibold mb-1">
+                      <span>Conference Room A</span>
+                      <span className="font-mono">92%</span>
+                    </div>
+                    <div className="bg-gray-100 h-1 rounded-full overflow-hidden">
+                      <div className="bg-[#0F172A] h-full" style={{ width: '92%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center text-xs font-sans text-[#45464d] font-semibold mb-1">
+                      <span>Lounge Hub</span>
+                      <span className="font-mono">45%</span>
+                    </div>
+                    <div className="bg-gray-100 h-1 rounded-full overflow-hidden">
+                      <div className="bg-[#0F172A] h-full" style={{ width: '45%' }}></div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

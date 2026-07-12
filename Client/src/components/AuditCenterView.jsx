@@ -1,12 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShieldCheck, FileText, CheckCircle2, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
+import { auditService } from '../services/auditService.js';
 
 export default function AuditCenterView() {
-  const [audits] = useState([
-    { id: 'AUD-2023-09', name: 'Q3 Physical Hardware Audit', date: 'Oct 15, 2023', status: 'COMPLETED', compliance: '99.2%', icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-50' },
-    { id: 'AUD-2023-10', name: 'Node 04 Software Compliance Scan', date: 'Oct 28, 2023', status: 'IN PROGRESS', compliance: '85.4%', icon: RefreshCw, color: 'text-blue-500 bg-blue-50' },
-    { id: 'AUD-2023-11', name: 'Offsite Asset Security Audit', date: 'Nov 12, 2023', status: 'SCHEDULED', compliance: '—', icon: AlertTriangle, color: 'text-amber-500 bg-amber-50' }
-  ]);
+  const [audits, setAudits] = useState([]);
+  const [discrepancyCount, setDiscrepancyCount] = useState(12);
+
+  useEffect(() => {
+    const fetchAudits = async () => {
+      try {
+        const list = await auditService.getAll();
+        setAudits(list);
+        const countData = await auditService.getDiscrepancyCount();
+        setDiscrepancyCount(countData.count ?? countData);
+      } catch (err) {
+        console.error('Error fetching audit data:', err);
+      }
+    };
+    fetchAudits();
+  }, []);
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -32,7 +44,7 @@ export default function AuditCenterView() {
         </div>
         <div className="bg-white border border-[#e5e4e7] p-4 rounded-lg flex flex-col justify-between min-h-[92px]">
           <span className="text-[10px] font-bold font-mono tracking-wider text-[#76777d] uppercase">Outstanding Discrepancies</span>
-          <span className="text-xl font-bold font-mono text-red-600 mt-2">12 Items</span>
+          <span className="text-xl font-bold font-mono text-red-600 mt-2">{discrepancyCount} Items</span>
         </div>
       </div>
 
@@ -44,11 +56,12 @@ export default function AuditCenterView() {
 
         <div className="divide-y divide-[#f0edef]">
           {audits.map((aud) => {
-            const Icon = aud.icon;
+            const Icon = aud.status === 'COMPLETED' ? CheckCircle2 : aud.status === 'IN PROGRESS' ? RefreshCw : AlertTriangle;
+            const color = aud.status === 'COMPLETED' ? 'text-emerald-500 bg-emerald-50' : aud.status === 'IN PROGRESS' ? 'text-blue-500 bg-blue-50' : 'text-amber-500 bg-amber-50';
             return (
               <div key={aud.id} className="py-3 flex justify-between items-center hover:bg-[#fcf8fa] px-2 rounded-sm transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded flex items-center justify-center ${aud.color}`}>
+                  <div className={`w-8 h-8 rounded flex items-center justify-center ${color}`}>
                     <Icon size={16} />
                   </div>
                   <div>

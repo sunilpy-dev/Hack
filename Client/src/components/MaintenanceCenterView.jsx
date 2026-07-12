@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { maintenanceService } from '../services/maintenanceService.js';
 import { 
   Plus, 
   ChevronRight, 
@@ -26,35 +27,42 @@ export default function MaintenanceCenterView({
   const [due, setDue] = useState('Oct 20, 2023');
   const [assignedTo, setAssignedTo] = useState('Technician A');
 
-  const moveOrder = (id, targetStatus) => {
-    setWorkOrders(orders => orders.map(order => 
-      order.id === id ? { ...order, status: targetStatus } : order
-    ));
+  const moveOrder = async (id, targetStatus) => {
+    try {
+      await maintenanceService.move(id, targetStatus);
+      const updated = await maintenanceService.getAll();
+      setWorkOrders(updated);
+    } catch (err) {
+      console.error('Error moving work order status:', err);
+    }
   };
 
-  const handleCreateOrder = (e) => {
+  const handleCreateOrder = async (e) => {
     e.preventDefault();
     if (!title) return;
 
-    const newOrder = {
-      id: `order-${Date.now()}`,
-      title,
-      priority,
-      status: 'pending',
-      due,
-      assignedTo,
-      description
-    };
+    try {
+      await maintenanceService.create({
+        title,
+        priority,
+        description,
+        due,
+        assignedTo
+      });
+      
+      const updated = await maintenanceService.getAll();
+      setWorkOrders(updated);
+      setIsNewWorkOrderOpen(false);
 
-    setWorkOrders([newOrder, ...workOrders]);
-    setIsNewWorkOrderOpen(false);
-
-    // Reset fields
-    setTitle('');
-    setPriority('HIGH');
-    setDescription('');
-    setDue('Oct 20, 2023');
-    setAssignedTo('Technician A');
+      // Reset fields
+      setTitle('');
+      setPriority('HIGH');
+      setDescription('');
+      setDue('Oct 20, 2023');
+      setAssignedTo('Technician A');
+    } catch (err) {
+      console.error('Error creating work order:', err);
+    }
   };
 
   const getPriorityStyle = (p) => {

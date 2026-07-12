@@ -6,6 +6,10 @@ import ResourceBookingView from './components/ResourceBookingView';
 import MaintenanceCenterView from './components/MaintenanceCenterView';
 import AuditCenterView from './components/AuditCenterView';
 import AnalyticsView from './components/AnalyticsView';
+import ExecutiveModeView from './components/ExecutiveModeView';
+
+import { assetService } from './services/assetService.js';
+import { maintenanceService } from './services/maintenanceService.js';
 
 import { 
   Search, 
@@ -24,12 +28,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('directory');
 
   // Global Assets State
-  const [assets, setAssets] = useState([
-    { id: 'asset-1', name: 'MacBook Pro M3', sn: 'AP-2024-X991', category: 'Laptops', status: 'ACTIVE', health: 98, location: 'San Francisco HQ', assignedTo: 'Jane Doe', initials: 'JD', type: 'laptop' },
-    { id: 'asset-2', name: 'Dell UltraSharp 38"', sn: 'DL-MON-8822', category: 'Displays', status: 'IN REPAIR', health: 42, location: 'San Francisco HQ', assignedTo: null, initials: null, type: 'monitor' },
-    { id: 'asset-3', name: 'Sony WH-1000XM5', sn: 'SN-AUD-4410', category: 'Audio', status: 'ACTIVE', health: 89, location: 'San Francisco HQ', assignedTo: 'Marcus Smith', initials: 'MS', type: 'headphones' },
-    { id: 'asset-4', name: 'Wacom Intuos Pro', sn: 'WC-GRA-201', category: 'Input Devices', status: 'ACTIVE', health: 94, location: 'San Francisco HQ', assignedTo: 'Anna Lee', initials: 'AL', type: 'tablet' }
-  ]);
+  const [assets, setAssets] = useState([]);
 
   // Selected Asset for Slide-out detail drawer
   const [selectedAsset, setSelectedAsset] = useState(null);
@@ -42,11 +41,22 @@ export default function App() {
   }, [assets]);
 
   // Global Work Orders State for Kanban
-  const [workOrders, setWorkOrders] = useState([
-    { id: 'order-1', title: 'HVAC Sensor Check - B12', priority: 'HIGH', status: 'pending', due: 'Oct 18, 2023', assignedTo: 'Technician A', description: 'Check B-12 HVAC sensor feedback discrepancies.' },
-    { id: 'order-2', title: 'Conference Room B Re-cable', priority: 'MEDIUM', status: 'approved', due: 'Oct 20, 2023', assignedTo: 'Technician B', description: 'Re-cable network interface points.' },
-    { id: 'order-3', title: 'Server Node 7 Diagnostics', priority: 'LOW', status: 'assigned', due: 'Oct 22, 2023', assignedTo: 'Technician A', description: 'Review kernel panic logs on Node 7.' }
-  ]);
+  const [workOrders, setWorkOrders] = useState([]);
+
+  // Load initial data from backend
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        const assetsData = await assetService.getAll();
+        setAssets(assetsData);
+        const workOrdersData = await maintenanceService.getAll();
+        setWorkOrders(workOrdersData);
+      } catch (err) {
+        console.error('Error fetching initial data from backend:', err);
+      }
+    };
+    loadInitialData();
+  }, []);
 
   // Modals state
   const [isNewAssetOpen, setIsNewAssetOpen] = useState(false);
@@ -62,17 +72,14 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
 
   // Handle AI Insights Generate Work Orders Action
-  const handleGenerateWorkOrders = () => {
-    const generated = Array.from({ length: 12 }).map((_, i) => ({
-      id: `order-gen-${i}-${Date.now()}`,
-      title: `Preventative Maintenance #${100 + i}`,
-      priority: i % 3 === 0 ? 'HIGH' : i % 2 === 0 ? 'MEDIUM' : 'LOW',
-      status: 'pending',
-      due: 'Oct 25, 2023',
-      assignedTo: i % 2 === 0 ? 'Technician A' : 'Technician B',
-      description: `Auto-generated preventative check from AI Insight log analytics.`
-    }));
-    setWorkOrders(prev => [...generated, ...prev]);
+  const handleGenerateWorkOrders = async () => {
+    try {
+      await maintenanceService.generatePreventative();
+      const updatedOrders = await maintenanceService.getAll();
+      setWorkOrders(updatedOrders);
+    } catch (err) {
+      console.error('Error generating work orders:', err);
+    }
   };
 
   // QR code scan simulation

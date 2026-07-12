@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { assetService } from '../services/assetService.js';
 import { 
   SlidersHorizontal, 
   Plus, 
@@ -63,56 +64,57 @@ export default function AssetDirectoryView({
     setIsEditing(true);
   };
 
-  const saveEdit = (id) => {
-    const updated = assets.map(a => {
-      if (a.id === id) {
-        return {
-          ...a,
-          name: editName,
-          sn: editSn,
-          status: editStatus,
-          health: Number(editHealth),
-          assignedTo: editAssignee || null,
-          initials: editAssignee ? editAssignee.split(' ').map(n => n[0]).join('').toUpperCase() : null
-        };
-      }
-      return a;
-    });
-    setAssets(updated);
-    // update drawer active asset
-    const newSelected = updated.find(a => a.id === id);
-    setSelectedAsset(newSelected);
-    setIsEditing(false);
+  const saveEdit = async (id) => {
+    try {
+      const updatedAsset = await assetService.update(id, {
+        name: editName,
+        sn: editSn,
+        status: editStatus,
+        health: Number(editHealth),
+        assignedTo: editAssignee || null
+      });
+
+      const updatedList = await assetService.getAll();
+      setAssets(updatedList);
+      
+      const newSelected = updatedList.find(a => a.id === id);
+      setSelectedAsset(newSelected || updatedAsset);
+      setIsEditing(false);
+    } catch (err) {
+      console.error('Error saving asset edits:', err);
+    }
   };
 
-  const handleCreateAsset = (e) => {
+  const handleCreateAsset = async (e) => {
     e.preventDefault();
     if (!newName || !newSn) return;
 
-    const newAsset = {
-      id: `asset-${Date.now()}`,
-      name: newName,
-      sn: newSn,
-      category: newCategory,
-      status: newStatus,
-      health: Number(newHealth),
-      location: newLocation,
-      assignedTo: newAssignee || null,
-      initials: newAssignee ? newAssignee.split(' ').map(n => n[0]).join('').toUpperCase() : null,
-      type: newCategory === 'Laptops' ? 'laptop' : newCategory === 'Displays' ? 'monitor' : newCategory === 'Audio' ? 'headphones' : 'tablet'
-    };
+    try {
+      await assetService.create({
+        name: newName,
+        sn: newSn,
+        category: newCategory,
+        status: newStatus,
+        health: Number(newHealth),
+        location: newLocation,
+        assignedTo: newAssignee || null
+      });
 
-    setAssets([newAsset, ...assets]);
-    setIsNewAssetOpen(false);
+      const updatedList = await assetService.getAll();
+      setAssets(updatedList);
+      setIsNewAssetOpen(false);
 
-    // Reset fields
-    setNewName('');
-    setNewSn('');
-    setNewCategory('Laptops');
-    setNewStatus('ACTIVE');
-    setNewHealth(100);
-    setNewAssignee('');
-    setNewLocation('San Francisco HQ');
+      // Reset fields
+      setNewName('');
+      setNewSn('');
+      setNewCategory('Laptops');
+      setNewStatus('ACTIVE');
+      setNewHealth(100);
+      setNewAssignee('');
+      setNewLocation('San Francisco HQ');
+    } catch (err) {
+      console.error('Error creating asset:', err);
+    }
   };
 
   // Filter Logic
