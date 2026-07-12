@@ -28,6 +28,7 @@ class MaintenanceService {
     const list = await maintenanceRepository.findAll(filters);
     return list.map(req => ({
       id: req.id,
+      requestNumber: `REQ-${req.id.slice(0, 6).toUpperCase()}`,
       title: req.description.split('\n')[0] || 'Maintenance Order',
       priority: mapPriorityToFrontend(req.priority),
       status: req.status,

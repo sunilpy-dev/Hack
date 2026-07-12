@@ -7,6 +7,7 @@ class BookingService {
     const list = await bookingRepository.findAll(employeeId);
     return list.map(b => ({
       id: b.id,
+      bookingNumber: `BOOK-${b.id.slice(0, 6).toUpperCase()}`,
       resourceId: b.resource_id,
       resourceName: b.resource_name,
       resourceType: b.resource_type,

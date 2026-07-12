@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function AssetDirectoryView({ 
+  currentUser,
   assets, 
   setAssets, 
   selectedAsset, 
@@ -34,6 +35,7 @@ export default function AssetDirectoryView({
   const [filterLocation, setFilterLocation] = useState('All');
   const [healthThreshold, setHealthThreshold] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [formError, setFormError] = useState('');
 
   // Local state for Drawer Tab
   const [drawerTab, setDrawerTab] = useState('maintenance');
@@ -88,6 +90,7 @@ export default function AssetDirectoryView({
   const handleCreateAsset = async (e) => {
     e.preventDefault();
     if (!newName || !newSn) return;
+    setFormError('');
 
     try {
       await assetService.create({
@@ -103,6 +106,7 @@ export default function AssetDirectoryView({
       const updatedList = await assetService.getAll();
       setAssets(updatedList);
       setIsNewAssetOpen(false);
+      setFormError('');
 
       // Reset fields
       setNewName('');
@@ -114,6 +118,7 @@ export default function AssetDirectoryView({
       setNewLocation('San Francisco HQ');
     } catch (err) {
       console.error('Error creating asset:', err);
+      setFormError(err.message || 'Failed to create asset. Please try again.');
     }
   };
 
@@ -145,7 +150,7 @@ export default function AssetDirectoryView({
   };
 
   return (
-    <div className="flex-1 flex relative overflow-hidden h-screen">
+    <div className="flex-1 flex relative overflow-hidden h-full">
       {/* Main Grid View Area */}
       <div className="flex-1 p-6 space-y-6 overflow-y-auto">
         
@@ -171,13 +176,15 @@ export default function AssetDirectoryView({
               <SlidersHorizontal size={14} />
               Filters
             </button>
-            <button 
-              onClick={() => setIsNewAssetOpen(true)}
-              className="h-9 px-4 rounded-sm bg-[#0F172A] text-white text-sm font-sans font-semibold hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus size={16} />
-              New Asset
-            </button>
+            {(currentUser?.permissions?.includes('asset.create') || currentUser?.role === 'Admin') && (
+              <button 
+                onClick={() => setIsNewAssetOpen(true)}
+                className="h-9 px-4 rounded-sm bg-[#0F172A] text-white text-sm font-sans font-semibold hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus size={16} />
+                New Asset
+              </button>
+            )}
           </div>
         </div>
 
@@ -302,7 +309,7 @@ export default function AssetDirectoryView({
                           {asset.name}
                         </h3>
                         <p className="text-xs font-mono text-[#76777d] mt-0.5">
-                          SN: {asset.sn}
+                          ID: {asset.tag || 'AST-GEN'} | SN: {asset.sn}
                         </p>
                       </div>
                     </div>
@@ -364,7 +371,7 @@ export default function AssetDirectoryView({
 
       {/* Right Drawer Panel (opened for selected asset) */}
       {selectedAsset && (
-        <div className="w-96 bg-white border-l border-[#e5e4e7] h-screen sticky top-0 flex flex-col justify-between shadow-lg z-10 animate-slide-in select-none">
+        <div className="w-96 bg-white border-l border-[#e5e4e7] h-full flex flex-col justify-between shadow-lg z-10 animate-slide-in select-none">
           {/* Header */}
           <div className="p-4 border-b border-[#e5e4e7] flex justify-between items-center">
             <div className="flex items-center gap-2.5">
@@ -376,7 +383,7 @@ export default function AssetDirectoryView({
                   {selectedAsset.name}
                 </h2>
                 <p className="text-[10px] font-mono text-[#76777d] font-medium">
-                  SERIAL: {selectedAsset.sn}
+                  ID: {selectedAsset.tag || 'AST-GEN'} | SERIAL: {selectedAsset.sn}
                 </p>
               </div>
             </div>
@@ -584,7 +591,7 @@ export default function AssetDirectoryView({
           </div>
 
           {/* Drawer Actions */}
-          {!isEditing && (
+          {!isEditing && (currentUser?.permissions?.includes('asset.update') || currentUser?.role === 'Admin') && (
             <div className="p-4 border-t border-[#e5e4e7] flex gap-2">
               <button 
                 onClick={() => startEdit(selectedAsset)}
@@ -608,7 +615,7 @@ export default function AssetDirectoryView({
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center select-none">
           <div className="bg-white border border-[#e5e4e7] rounded-xl w-[480px] p-6 shadow-2xl animate-fade-in relative">
             <button 
-              onClick={() => setIsNewAssetOpen(false)}
+              onClick={() => { setIsNewAssetOpen(false); setFormError(''); }}
               className="absolute top-4 right-4 text-[#76777d] hover:text-[#0F172A] p-1 rounded-full hover:bg-[#f6f3f5] transition-colors cursor-pointer"
             >
               <X size={18} />
@@ -618,6 +625,12 @@ export default function AssetDirectoryView({
             <p className="text-xs text-[#76777d] mb-4">Register a physical device or virtual node in the system catalog.</p>
 
             <form onSubmit={handleCreateAsset} className="space-y-4">
+              {formError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded text-xs font-sans leading-relaxed flex items-start gap-2">
+                  <span className="font-bold">Error:</span>
+                  <span>{formError}</span>
+                </div>
+              )}
               
               {/* Asset Name */}
               <div>

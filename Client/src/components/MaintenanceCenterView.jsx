@@ -19,6 +19,8 @@ export default function MaintenanceCenterView({
   setIsNewWorkOrderOpen 
 }) {
   const [filterPriority, setFilterPriority] = useState('All');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // Form states
   const [title, setTitle] = useState('');
@@ -27,11 +29,27 @@ export default function MaintenanceCenterView({
   const [due, setDue] = useState('Oct 20, 2023');
   const [assignedTo, setAssignedTo] = useState('Technician A');
 
+  const fetchWorkOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await maintenanceService.getAll();
+      setWorkOrders(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load work orders. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchWorkOrders();
+  }, []);
+
   const moveOrder = async (id, targetStatus) => {
     try {
       await maintenanceService.move(id, targetStatus);
-      const updated = await maintenanceService.getAll();
-      setWorkOrders(updated);
+      await fetchWorkOrders();
     } catch (err) {
       console.error('Error moving work order status:', err);
     }
@@ -50,8 +68,7 @@ export default function MaintenanceCenterView({
         assignedTo
       });
       
-      const updated = await maintenanceService.getAll();
-      setWorkOrders(updated);
+      await fetchWorkOrders();
       setIsNewWorkOrderOpen(false);
 
       // Reset fields
@@ -102,6 +119,35 @@ export default function MaintenanceCenterView({
   const filteredOrders = workOrders.filter(o => 
     filterPriority === 'All' || o.priority === filterPriority
   );
+
+  if (loading) {
+    return (
+      <div className="flex-1 p-6 flex flex-col items-center justify-center min-h-[400px] bg-[#fcf8fa]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-slate-300 border-t-[#0F172A] rounded-full animate-spin"></div>
+          <span className="font-sans text-xs text-[#76777d]">Loading work orders...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 p-6 flex flex-col items-center justify-center min-h-[400px] bg-[#fcf8fa]">
+        <div className="bg-white border border-[#e5e4e7] p-6 rounded-lg shadow-sm max-w-md text-center space-y-4">
+          <AlertCircle className="mx-auto text-red-500" size={32} />
+          <h3 className="font-bold text-sm text-[#0F172A] font-sans">Failed to Load Work Orders</h3>
+          <p className="text-xs text-[#76777d] font-sans leading-relaxed">{error}</p>
+          <button 
+            onClick={fetchWorkOrders}
+            className="w-full h-9 bg-[#0F172A] hover:bg-slate-800 text-white rounded text-xs font-semibold cursor-pointer transition-colors"
+          >
+            Retry Connection
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 p-6 space-y-6 overflow-y-auto">
@@ -179,7 +225,10 @@ export default function MaintenanceCenterView({
                         <h4 className="text-xs font-bold text-[#0F172A] font-sans leading-tight">
                           {order.title}
                         </h4>
-                        <p className="text-[10px] text-[#76777d] font-sans leading-relaxed">
+                        <div className="text-[9px] font-mono font-bold text-cyan-600 uppercase mt-0.5 tracking-wider">
+                          {order.requestNumber}
+                        </div>
+                        <p className="text-[10px] text-[#76777d] font-sans leading-relaxed mt-1">
                           {order.description || 'No description provided.'}
                         </p>
                       </div>

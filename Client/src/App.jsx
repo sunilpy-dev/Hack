@@ -112,13 +112,13 @@ export default function App() {
   const getAllowedTabs = (role) => {
     switch (role) {
       case 'Employee':
-        return ['dashboard', 'directory', 'booking', 'profile'];
+        return ['dashboard', 'directory', 'booking', 'profile', 'maintenance'];
       case 'Department Head':
-        return ['dashboard', 'directory', 'booking', 'profile'];
+        return ['dashboard', 'directory', 'booking', 'profile', 'maintenance'];
       case 'Asset Manager':
         return ['dashboard', 'directory', 'maintenance', 'profile'];
       case 'Resource Manager':
-        return ['dashboard', 'booking', 'profile'];
+        return ['dashboard', 'booking', 'profile', 'maintenance'];
       case 'Technician':
         return ['dashboard', 'maintenance', 'profile'];
       case 'Auditor':
@@ -267,7 +267,7 @@ export default function App() {
   const allowedTabs = getAllowedTabs(currentUser.role);
 
   return (
-    <div className="flex w-full min-h-screen bg-[#fcf8fa] relative overflow-hidden font-sans">
+    <div className="flex w-full h-screen bg-[#fcf8fa] relative overflow-hidden font-sans">
       
       {/* Sidebar Navigation */}
       <Sidebar 
@@ -279,10 +279,10 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
         
         {/* Global Header */}
-        <header className="h-[60px] bg-white border-b border-[#e5e4e7] px-6 flex items-center justify-between z-10 shrink-0 sticky top-0">
+        <header className="h-[60px] bg-white border-b border-[#e5e4e7] px-6 flex items-center justify-between z-10 shrink-0">
           
           {/* Left search */}
           <form onSubmit={handleGlobalSearchSubmit} className="relative w-80">
@@ -371,6 +371,7 @@ export default function App() {
         <div className="flex-1 flex overflow-hidden">
           {activeTab === 'dashboard' && allowedTabs.includes('dashboard') && (
             <DashboardView 
+              currentUser={currentUser}
               onOpenNewAsset={() => {
                 setActiveTab('directory');
                 setIsNewAssetOpen(true);
@@ -382,6 +383,7 @@ export default function App() {
 
           {activeTab === 'directory' && allowedTabs.includes('directory') && (
             <AssetDirectoryView 
+              currentUser={currentUser}
               assets={assets}
               setAssets={setAssets}
               selectedAsset={selectedAsset}

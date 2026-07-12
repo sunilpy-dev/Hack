@@ -49,8 +49,8 @@ export default function PasswordResetView({ email, userId, onPasswordResetSucces
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fcf8fa] p-6">
-      <div className="w-full max-w-[460px] bg-white border border-[#e5e4e7] p-8 rounded-lg shadow-sm">
+    <div className="w-full flex flex-col items-center justify-center p-6 bg-[#fcf8fa]">
+      <div className="w-full max-w-[460px] bg-white border border-[#e5e4e7] p-8 rounded-lg shadow-sm mx-auto my-auto">
         {/* Header warning */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 mb-3 border border-amber-200">

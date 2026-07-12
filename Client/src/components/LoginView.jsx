@@ -95,8 +95,8 @@ export default function LoginView({ onLoginSuccess, onPasswordResetRequired }) {
       </div>
 
       {/* Right panel - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-[420px] bg-white border border-[#e5e4e7] p-8 rounded-lg shadow-sm">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-[420px] bg-white border border-[#e5e4e7] p-8 rounded-lg shadow-sm mx-auto my-auto">
           {/* Logo and Greeting */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4 lg:hidden">

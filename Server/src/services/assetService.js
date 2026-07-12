@@ -46,6 +46,7 @@ class AssetService {
     return dbAssets.map(asset => ({
       id: asset.asset_id,
       name: asset.asset_name,
+      tag: asset.asset_tag,
       sn: asset.serial_number,
       category: asset.category_name === 'Monitors' ? 'Displays' : asset.category_name,
       status: mapDbStatusToFrontend(asset.current_status),

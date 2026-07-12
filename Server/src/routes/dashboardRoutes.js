@@ -8,6 +8,6 @@ const router = express.Router();
 router.use(requireAuth);
 
 router.get('/stats', dashboardController.getStats);
-router.get('/logs', requirePermission('activity.view'), dashboardController.getLogs);
+router.get('/logs', requirePermission('dashboard.logs'), dashboardController.getLogs);
 
 export default router;

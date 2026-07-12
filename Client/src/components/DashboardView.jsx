@@ -13,7 +13,7 @@ import {
   Plus
 } from 'lucide-react';
 
-export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, workOrdersCount }) {
+export default function DashboardView({ currentUser, onOpenNewAsset, onGenerateWorkOrders, workOrdersCount }) {
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState({
     totalAssets: 1248,
@@ -72,13 +72,15 @@ export default function DashboardView({ onOpenNewAsset, onGenerateWorkOrders, wo
           <button className="h-9 px-4 rounded-sm border border-[#e5e4e7] bg-white text-sm font-sans font-semibold text-[#45464d] hover:bg-[#f6f3f5] transition-colors cursor-pointer">
             Export Report
           </button>
-          <button 
-            onClick={onOpenNewAsset}
-            className="h-9 px-4 rounded-sm bg-[#0F172A] text-white text-sm font-sans font-semibold hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <Plus size={16} />
-            Provision Asset
-          </button>
+          {(currentUser?.permissions?.includes('asset.create') || currentUser?.role === 'Admin') && (
+            <button 
+              onClick={onOpenNewAsset}
+              className="h-9 px-4 rounded-sm bg-[#0F172A] text-white text-sm font-sans font-semibold hover:bg-slate-800 transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus size={16} />
+              Provision Asset
+            </button>
+          )}
         </div>
       </div>
 

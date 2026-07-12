@@ -45,7 +45,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant, us
         {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
       </button>
 
-      <div>
+      <div className="flex-1 overflow-y-auto min-h-0">
         {/* Logo Section */}
         <div className={`p-4 border-b border-[#e5e4e7] ${isCollapsed ? 'items-center' : 'items-start'} flex flex-col justify-center min-h-[90px]`}>
           {!isCollapsed ? (
