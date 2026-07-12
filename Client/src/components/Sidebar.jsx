@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
 import { 
-  LayoutDashboard, 
-  FolderTree, 
-  CalendarRange, 
-  Wrench, 
-  FileCheck, 
-  BarChart3, 
-  ShieldAlert, 
-  Settings, 
-  HelpCircle, 
-  Bot, 
-  ChevronLeft, 
-  ChevronRight,
-  MessageSquare,
-  Send,
-  X
+ LayoutDashboard,
+  FolderTree,
+  CalendarRange,
+  Wrench,
+  FileCheck,
+  BarChart3,
+  ShieldAlert,
+  Building2,
+  Settings,
+  HelpCircle,
+  Bot,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant }) {
@@ -28,6 +26,7 @@ export default function Sidebar({ activeTab, setActiveTab, onOpenAiAssistant }) 
     { id: 'audit', label: 'Audit Center', icon: FileCheck },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'executive', label: 'Executive Mode', icon: ShieldAlert },
+    { id: 'organization', label: 'Organization Setup', icon: Building2 },
   ];
 
   return (

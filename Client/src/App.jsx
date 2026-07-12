@@ -6,6 +6,8 @@ import ResourceBookingView from './components/ResourceBookingView';
 import MaintenanceCenterView from './components/MaintenanceCenterView';
 import AuditCenterView from './components/AuditCenterView';
 import AnalyticsView from './components/AnalyticsView';
+import ExecutiveModeView from './components/ExecutiveModeView';
+import OrganizationSetupView from './components/OrganizationSetupView';
 
 import { 
   Search, 
@@ -282,6 +284,8 @@ export default function App() {
           {activeTab === 'analytics' && <AnalyticsView />}
 
           {activeTab === 'executive' && <ExecutiveModeView />}
+
+          {activeTab === 'organization' && <OrganizationSetupView />}
 
           {activeTab === 'settings' && (
             <div className="flex-1 p-6 space-y-4 overflow-y-auto">
