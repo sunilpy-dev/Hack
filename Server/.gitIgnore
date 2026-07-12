@@ -1,0 +1,70 @@
+sql
+
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+
+# Build folders
+dist/
+build/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+tmp/
+temp/
+
+# PostgreSQL dumps
+*.sql
+*.dump
+
+# Uploads (if storing uploaded files locally)
+uploads/
+
+# Testing
+.nyc_output/
+
+# dotenv
+.env.*
+
+# PM2
+.pm2/
+
+# Node version files
+.nvmrc
+
+# Package lock (optional - usually keep it)
+# package-lock.json
